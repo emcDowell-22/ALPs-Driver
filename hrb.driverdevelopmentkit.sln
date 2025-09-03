@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRB.TemplateDriver.API", "hrb.templatedriver.api\hrb.templatedriver.api.csproj", "{9863C4C5-547C-4002-BECC-B0636A818009}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRB.TemplateDriver.Ethernet", "hrb.templatedriver.ethernet\hrb.templatedriver.ethernet.csproj", "{443B4888-451A-4503-A77C-0B0A890C47FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRB.TemplateDriver.Serial", "hrb.templatedriver.serial\hrb.templatedriver.serial.csproj", "{7F6FC590-143F-4F11-BF97-C509F5A8071A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9863C4C5-547C-4002-BECC-B0636A818009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9863C4C5-547C-4002-BECC-B0636A818009}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9863C4C5-547C-4002-BECC-B0636A818009}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9863C4C5-547C-4002-BECC-B0636A818009}.Release|Any CPU.Build.0 = Release|Any CPU
+		{443B4888-451A-4503-A77C-0B0A890C47FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{443B4888-451A-4503-A77C-0B0A890C47FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{443B4888-451A-4503-A77C-0B0A890C47FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{443B4888-451A-4503-A77C-0B0A890C47FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F6FC590-143F-4F11-BF97-C509F5A8071A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F6FC590-143F-4F11-BF97-C509F5A8071A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F6FC590-143F-4F11-BF97-C509F5A8071A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F6FC590-143F-4F11-BF97-C509F5A8071A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CBCE50A8-7612-4109-898F-93AF28BF5F4E}
+	EndGlobalSection
+EndGlobal
