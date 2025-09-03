@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO.Ports;
 using Cellario.DeviceBase;
 
@@ -79,10 +80,10 @@ namespace HRB
             ConnectionParameters[_connectionPort] = "COM13";
 
             // Add operations with default parameters
-            var connectParameters = new Hashtable();
+            var connectParameters = new SortedList();
             Operations.Add(_operationConnect, connectParameters);
 
-            var sealingParameters = new Hashtable
+            var sealingParameters = new SortedList
             {
                 { _parameterTemperature, DefaultTemperature },
                 { _parameterSealTime, DefaultSealTime },
@@ -256,7 +257,7 @@ namespace HRB
 
         private void SetSealingParameters()
         {
-            var parameters = Operations[_operationStartSealing] as Hashtable;
+            var parameters = Operations[_operationStartSealing] as SortedList;
             if (parameters == null)
             {
                 throw new Exception("Sealing parameters not found");
