@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "drCqfbibUbA=",
+  "dgSpecHash": "lke99Yog8To=",
   "success": true,
-  "projectFilePath": "C:\\lila\\cellario-driver-alps\\driver_alps\\hrb.alps.driver\\hrb.alps.driver.csproj",
+  "projectFilePath": "C:\\lila\\ALPs-Driver\\ALPs-Driver\\hrb.alps.driver\\hrb.alps.driver.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\EmmaMcDowell\\.nuget\\packages\\runtime.linux-arm.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
     "C:\\Users\\EmmaMcDowell\\.nuget\\packages\\runtime.linux-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.linux-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",

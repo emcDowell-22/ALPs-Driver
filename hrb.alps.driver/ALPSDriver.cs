@@ -76,7 +76,7 @@ namespace HRB
             _serialPort.Encoding = System.Text.Encoding.ASCII;
 
             // Add Default Connection Parameters
-            ConnectionParameters[_connectionPort] = "COM4";
+            ConnectionParameters[_connectionPort] = "COM13";
 
             // Add operations with default parameters
             var connectParameters = new Hashtable();

@@ -23,11 +23,11 @@ class TestDriver
             var driver = new ALPSDriver();
 
             // Get COM port from user
-            Console.Write("\nEnter COM port to use (press Enter for COM4): ");
+            Console.Write("\nEnter COM port to use (press Enter for COM13): ");
             string? comPort = Console.ReadLine()?.Trim().ToUpper();
             if (string.IsNullOrEmpty(comPort))
             {
-                comPort = "COM4";
+                comPort = "COM13";
             }
 
             // Set the COM port

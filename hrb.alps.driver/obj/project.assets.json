@@ -238,11 +238,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\lila\\cellario-driver-alps\\driver_alps\\hrb.alps.driver\\hrb.alps.driver.csproj",
+      "projectUniqueName": "C:\\lila\\ALPs-Driver\\ALPs-Driver\\hrb.alps.driver\\hrb.alps.driver.csproj",
       "projectName": "hrb.alps.driver",
-      "projectPath": "C:\\lila\\cellario-driver-alps\\driver_alps\\hrb.alps.driver\\hrb.alps.driver.csproj",
+      "projectPath": "C:\\lila\\ALPs-Driver\\ALPs-Driver\\hrb.alps.driver\\hrb.alps.driver.csproj",
       "packagesPath": "C:\\Users\\EmmaMcDowell\\.nuget\\packages\\",
-      "outputPath": "C:\\lila\\cellario-driver-alps\\driver_alps\\hrb.alps.driver\\obj\\",
+      "outputPath": "C:\\lila\\ALPs-Driver\\ALPs-Driver\\hrb.alps.driver\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\EmmaMcDowell\\AppData\\Roaming\\NuGet\\NuGet.Config"
