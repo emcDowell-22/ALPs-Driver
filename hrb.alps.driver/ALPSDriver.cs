@@ -66,6 +66,23 @@ namespace HRB
         private const int NotAtSealTempBit = 3;
         private const int DefaultStatusCheckTimeout = 300000; // 5 minutes in milliseconds
         private const int StatusCheckInterval = 1000; // 1 second in milliseconds
+        private bool _abortRequested = false;
+
+        public void RequestAbort()
+        {
+            LogMessage("Abort requested");
+            _abortRequested = true;
+        }
+
+        private void CheckForAbort()
+        {
+            if (_abortRequested)
+            {
+                _abortRequested = false; // Reset the flag
+                AbortDevice();
+                throw new OperationCanceledException("Operation aborted by user");
+            }
+        }
 
         private (bool success, byte status) GetDeviceStatus()
         {
@@ -117,6 +134,8 @@ namespace HRB
 
             while (!IsTemperatureReady())
             {
+                CheckForAbort(); // Check if abort was requested
+
                 if (DateTime.Now - startTime > timeout)
                 {
                     throw new TimeoutException("Timeout waiting for temperature to reach target");
@@ -233,6 +252,8 @@ namespace HRB
 
             while (true)
             {
+                CheckForAbort(); // Check if abort was requested
+
                 var (isBusy, statusMessage) = CheckDeviceStatus();
                 if (!isBusy)
                     return;
@@ -545,6 +566,8 @@ namespace HRB
 
             while (true)
             {
+                CheckForAbort(); // Check if abort was requested
+
                 if (DateTime.Now - startTime > timeout)
                 {
                     throw new TimeoutException("Timeout waiting for sealing operation to complete");

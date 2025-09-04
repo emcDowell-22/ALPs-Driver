@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <StartupObject>TestDriver</StartupObject>
+    <StartupObject>HRB.TestDriver</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
