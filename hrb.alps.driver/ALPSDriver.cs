@@ -77,7 +77,7 @@ namespace HRB
             _serialPort.Encoding = System.Text.Encoding.ASCII;
 
             // Add Default Connection Parameters
-            ConnectionParameters[_connectionPort] = "COM13";
+            ConnectionParameters[_connectionPort] = "13";  // Enter port number only (e.g. "13" for COM13)
 
             // Add operations with default parameters
             var connectParameters = new SortedList();
@@ -198,7 +198,7 @@ namespace HRB
                 throw new Exception($"Connection Parameter cannot be null or empty: {_connectionPort}");
             }
 
-            var comPort = comPortValue.ToString()!;
+            var comPort = FormatComPort(comPortValue.ToString()!);
             _serialPort.PortName = comPort;
 
             LogMessage($"Using port: {comPort}");
@@ -378,6 +378,15 @@ namespace HRB
             {
                 throw new Exception($"Connect command failed: {ex.Message}");
             }
+        }
+
+        private string FormatComPort(string portInput)
+        {
+            if (!int.TryParse(portInput, out int portNumber))
+            {
+                throw new Exception($"Port number must be a valid number, got: {portInput}");
+            }
+            return $"COM{portNumber}";
         }
 
         private void ExecuteStartSealing()

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("hrb.alps.driver")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8868ba70206be10d69153d2e18c4baf8a5ad3107")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2cc4b0e1ea91a28cee7b129724dd77c3a572c5b0")]
 [assembly: System.Reflection.AssemblyProductAttribute("hrb.alps.driver")]
 [assembly: System.Reflection.AssemblyTitleAttribute("hrb.alps.driver")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
