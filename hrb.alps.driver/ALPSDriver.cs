@@ -20,6 +20,7 @@ namespace HRB
         private const string _operationConnect = "Connect";
         //seal operations
         private const string _operationStartSealing = "StartSealing";
+        public string StartSealingOperationName => _operationStartSealing;
 
         // Default values
         private const int DefaultTemperature = 165; // °C
@@ -61,6 +62,71 @@ namespace HRB
             (7, "Park Mode")
         };
 
+        private const int BusyBit = 2;
+        private const int NotAtSealTempBit = 3;
+        private const int DefaultStatusCheckTimeout = 300000; // 5 minutes in milliseconds
+        private const int StatusCheckInterval = 1000; // 1 second in milliseconds
+
+        private (bool success, byte status) GetDeviceStatus()
+        {
+            var (success, response, error) = SendCommand("?", "Getting device status");
+            if (!success || string.IsNullOrEmpty(response))
+            {
+                LogMessage($"Failed to get device status: {error}");
+                return (false, 0);
+            }
+
+            if (byte.TryParse(response, System.Globalization.NumberStyles.HexNumber, null, out byte status))
+            {
+                return (true, status);
+            }
+
+            LogMessage($"Failed to parse status response: {response}");
+            return (false, 0);
+        }
+
+        private bool IsBitSet(byte status, int bitPosition)
+        {
+            return (status & (1 << bitPosition)) != 0;
+        }
+
+        private bool IsTemperatureReady()
+        {
+            if (!EnsurePortOpen())
+                return false;
+
+            _serialPort.Write("?\r");
+            System.Threading.Thread.Sleep(150);
+            string response = _serialPort.ReadExisting().Trim();
+
+            if (string.IsNullOrEmpty(response))
+                return false;
+
+            if (byte.TryParse(response, System.Globalization.NumberStyles.HexNumber, null, out byte status))
+            {
+                return !IsBitSet(status, NotAtSealTempBit);
+            }
+
+            return false;
+        }
+
+        private void WaitForTemperatureReady(int timeoutMs = DefaultStatusCheckTimeout)
+        {
+            var startTime = DateTime.Now;
+            var timeout = TimeSpan.FromMilliseconds(timeoutMs);
+
+            while (!IsTemperatureReady())
+            {
+                if (DateTime.Now - startTime > timeout)
+                {
+                    throw new TimeoutException("Timeout waiting for temperature to reach target");
+                }
+
+                LogMessage("Temperature not ready, waiting...");
+                System.Threading.Thread.Sleep(StatusCheckInterval);
+            }
+        }
+
         private readonly SerialPort _serialPort;
         private bool _isInitialized = false;
 
@@ -93,33 +159,120 @@ namespace HRB
             Operations.Add(_operationStartSealing, sealingParameters);
         }
 
+        private bool EnsurePortOpen()
+        {
+            if (_serialPort.IsOpen)
+                return true;
+
+            try
+            {
+                LogMessage($"Opening port {_serialPort.PortName}");
+                _serialPort.Open();
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                LogMessage($"Access denied to port {_serialPort.PortName}. Make sure no other program is using it.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"Failed to open port {_serialPort.PortName}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void ClosePort()
+        {
+            if (_serialPort.IsOpen)
+            {
+                LogMessage("Closing port");
+                _serialPort.Close();
+                System.Threading.Thread.Sleep(100); // Wait for port to close
+            }
+        }
+
+        private (bool isBusy, string? error) CheckDeviceStatus()
+        {
+            if (!EnsurePortOpen())
+                return (true, "Could not open port");
+
+            _serialPort.Write("?\r");
+            System.Threading.Thread.Sleep(150);
+            string response = _serialPort.ReadExisting().Trim();
+
+            if (string.IsNullOrEmpty(response))
+                return (true, "No response from device");
+
+            if (!byte.TryParse(response, System.Globalization.NumberStyles.HexNumber, null, out byte status))
+                return (true, $"Invalid status response: {response}");
+
+            bool isBusy = (status & (1 << BusyBit)) != 0;
+            if (isBusy)
+            {
+                // Check which conditions are causing the busy state
+                var conditions = new System.Text.StringBuilder();
+                for (int i = 0; i < StatusBits.Length; i++)
+                {
+                    if ((status & (1 << i)) != 0 && i != 0) // Skip "No Fail" bit
+                    {
+                        if (conditions.Length > 0) conditions.Append(", ");
+                        conditions.Append(StatusBits[i].description);
+                    }
+                }
+                return (true, conditions.Length > 0 ? conditions.ToString() : "Device busy");
+            }
+
+            return (false, null);
+        }
+
+        private void WaitForDeviceReady(int timeoutMs = DefaultStatusCheckTimeout)
+        {
+            var startTime = DateTime.Now;
+            var lastMessage = "";
+
+            while (true)
+            {
+                var (isBusy, statusMessage) = CheckDeviceStatus();
+                if (!isBusy)
+                    return;
+
+                if ((DateTime.Now - startTime).TotalMilliseconds > timeoutMs)
+                {
+                    throw new TimeoutException($"Timeout waiting for device to become ready. Last status: {statusMessage}");
+                }
+
+                // Only log if status message changed
+                if (statusMessage != lastMessage)
+                {
+                    LogMessage($"Device status: {statusMessage}");
+                    lastMessage = statusMessage ?? "";
+                }
+
+                System.Threading.Thread.Sleep(StatusCheckInterval);
+            }
+        }
+
         private (bool success, string? response, string? error) SendCommand(string command, string description)
         {
             try
             {
                 LogMessage($"{description} - Sending command: {command}");
 
-                // Make sure port is closed before attempting to open
-                if (_serialPort.IsOpen)
+                if (!EnsurePortOpen())
                 {
-                    LogMessage("Closing existing port connection");
-                    _serialPort.Close();
-                    System.Threading.Thread.Sleep(100); // Wait for port to close
+                    return (false, null, $"Could not open port {_serialPort.PortName}");
                 }
 
+                // Wait for device to be ready before sending command
                 try
                 {
-                    _serialPort.PortName = _serialPort.PortName;
-                    LogMessage($"Opening port {_serialPort.PortName}");
-                    _serialPort.Open();
+                    LogMessage("Checking device status before sending command...");
+                    WaitForDeviceReady();
                 }
-                catch (UnauthorizedAccessException)
+                catch (TimeoutException ex)
                 {
-                    return (false, null, $"Access denied to port {_serialPort.PortName}. Make sure no other program is using it.");
-                }
-                catch (Exception ex)
-                {
-                    return (false, null, $"Failed to open port {_serialPort.PortName}: {ex.Message}");
+                    return (false, null, ex.Message);
                 }
 
                 // Send command with CR
@@ -132,10 +285,6 @@ namespace HRB
 
                 string response = _serialPort.ReadExisting().Trim();
                 LogMessage($"Raw response: '{response}'");
-
-                // Close port after command
-                _serialPort.Close();
-                LogMessage("Port closed");
 
                 if (string.IsNullOrEmpty(response))
                 {
@@ -389,12 +538,64 @@ namespace HRB
             return $"COM{portNumber}";
         }
 
+        private void WaitForSealingComplete(int timeoutMs = 30000)
+        {
+            var startTime = DateTime.Now;
+            var timeout = TimeSpan.FromMilliseconds(timeoutMs);
+
+            while (true)
+            {
+                if (DateTime.Now - startTime > timeout)
+                {
+                    throw new TimeoutException("Timeout waiting for sealing operation to complete");
+                }
+
+                var (success, response, error) = SendCommand("?", "Checking sealing status");
+                if (!success)
+                {
+                    throw new Exception($"Failed to check sealing status: {error}");
+                }
+
+                if (byte.TryParse(response, System.Globalization.NumberStyles.HexNumber, null, out byte status))
+                {
+                    // If device is not busy and no error bits are set, sealing is complete
+                    bool isBusy = (status & (1 << BusyBit)) != 0;
+                    bool hasError = (status & (1 << 1)) != 0;  // Error bit
+                    
+                    if (!isBusy)
+                    {
+                        if (hasError)
+                        {
+                            var errorDesc = new System.Text.StringBuilder("Sealing failed. Issues: ");
+                            for (int i = 0; i < StatusBits.Length; i++)
+                            {
+                                if ((status & (1 << i)) != 0 && i != 0)
+                                {
+                                    errorDesc.Append(StatusBits[i].description).Append(", ");
+                                }
+                            }
+                            throw new Exception(errorDesc.ToString().TrimEnd(' ', ','));
+                        }
+                        return; // Sealing completed successfully
+                    }
+                }
+
+                System.Threading.Thread.Sleep(500); // Check every 500ms
+            }
+        }
+
         private void ExecuteStartSealing()
         {
             try
             {
-                // Verify and set sealing parameters
+                LogMessage("Checking device status before sealing...");
+                WaitForDeviceReady();
+
+                LogMessage("Verifying and setting sealing parameters...");
                 SetSealingParameters();
+
+                LogMessage("Waiting for temperature to stabilize...");
+                WaitForTemperatureReady();
 
                 // Start sealing
                 var (success, response, error) = SendCommand("S", "Starting sealing operation");
@@ -406,15 +607,22 @@ namespace HRB
                 if (response?.ToLower() == ResponseOK)
                 {
                     LogMessage("Sealing operation started successfully");
+                    LogMessage("Waiting for sealing operation to complete...");
+                    WaitForSealingComplete();
+                    LogMessage("Sealing operation completed successfully");
                 }
                 else if (response?.ToLower() == ResponseError)
                 {
-                    throw new Exception("Unable to start sealing operation. Check device status.");
+                    throw new Exception("Device rejected sealing command. Check temperature and device status.");
                 }
                 else
                 {
                     throw new Exception($"Unexpected response: {response}");
                 }
+            }
+            catch (TimeoutException ex)
+            {
+                throw new Exception($"Sealing operation timed out: {ex.Message}");
             }
             catch (Exception ex)
             {

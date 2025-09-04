@@ -1,10 +1,21 @@
 using System;
 using System.Collections;
 using System.IO.Ports;
+using System.Threading;
+using System.Threading.Tasks;
 using HRB;
 
 class TestDriver
 {
+    static void ShowDefaultParameters()
+    {
+        Console.WriteLine("\nDefault Sealing Parameters:");
+        Console.WriteLine($"Temperature: 165°C");
+        Console.WriteLine($"Seal Time: 3.0 seconds");
+        Console.WriteLine($"Seal Force: 50 Kg");
+        Console.WriteLine($"Seal Length: 125 mm");
+    }
+
     static void Main()
     {
         Console.WriteLine("ALPS Driver Test");
@@ -21,82 +32,101 @@ class TestDriver
         {
             // Create driver instance
             var driver = new ALPSDriver();
-
-            // Get COM port from user
-            Console.Write("\nEnter COM port to use (press Enter for COM13): ");
-            string? comPort = Console.ReadLine()?.Trim().ToUpper();
-            if (string.IsNullOrEmpty(comPort))
-            {
-                comPort = "COM13";
-            }
-
-            // Set the COM port
-            driver.ConnectionParameters["Port"] = comPort;
-            Console.WriteLine($"\nAttempting to connect to ALPS on {comPort}");
-
-            // Connect to the device
-            driver.Connect();
-            Console.WriteLine("Device connected and initialized successfully");
-
-            // Show default sealing parameters
-            Console.WriteLine("\nDefault Sealing Parameters:");
-            Console.WriteLine($"Temperature: 165°C");
-            Console.WriteLine($"Seal Time: 3.0 seconds");
-            Console.WriteLine($"Seal Force: 50 Kg");
-            Console.WriteLine($"Seal Length: 125 mm");
-
-            // Menu loop
+            bool needsConnection = true;
             bool exit = false;
+
             while (!exit)
             {
-                Console.WriteLine("\nCommands:");
-                Console.WriteLine("1. Start Sealing (using current parameters)");
-                Console.WriteLine("2. View Current Parameters");
-                Console.WriteLine("3. Modify Parameters");
-                Console.WriteLine("4. Disconnect and Exit");
-                Console.Write("\nEnter command number: ");
-
-                string? input = Console.ReadLine()?.Trim();
-                Console.WriteLine();
-
-                switch (input)
+                try
                 {
-                    case "1":
-                        try
+                    if (needsConnection)
+                    {
+                        // Get COM port from user
+                        Console.Write("\nEnter COM port to use (press Enter for COM13): ");
+                        string? comPort = Console.ReadLine()?.Trim().ToUpper();
+                        if (string.IsNullOrEmpty(comPort))
                         {
-                            Console.WriteLine("Starting sealing operation...");
+                            comPort = "COM13";
+                        }
+
+                        // Set the COM port
+                        driver.ConnectionParameters["Port"] = comPort;
+                        Console.WriteLine($"\nAttempting to connect to ALPS on {comPort}");
+
+                        // Connect to the device
+                        driver.Connect();
+                        Console.WriteLine("Device connected and initialized successfully");
+                        needsConnection = false;
+                        ShowDefaultParameters();
+                    }
+
+                    Console.WriteLine("\nCommands:");
+                    Console.WriteLine("1. Start Sealing (using current parameters)");
+                    Console.WriteLine("2. View Current Parameters");
+                    Console.WriteLine("3. Modify Parameters");
+                    Console.WriteLine("4. Get Current Temperature");
+                    Console.WriteLine("5. Disconnect and Exit");
+                    Console.Write("\nEnter command number: ");
+
+                    string? input = Console.ReadLine()?.Trim();
+                    Console.WriteLine();
+
+                    switch (input)
+                    {
+                        case "1":
+                            try
+                            {
+                                                            Console.WriteLine("Starting sealing operation...");
                             driver.StartSealing();
                             Console.WriteLine("Sealing operation completed successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"\nOperation error: {ex.Message}");
+                            }
+                            break;
+
+                        case "2":
+                            var viewParams = driver.Operations[driver.StartSealingOperationName] as SortedList;
+                            if (viewParams != null)
+                            {
+                                Console.WriteLine("Current Sealing Parameters:");
+                                Console.WriteLine($"Temperature: {viewParams["Temperature"]}°C");
+                                Console.WriteLine($"Seal Time: {viewParams["SealTime"]} seconds");
+                                Console.WriteLine($"Seal Force: {viewParams["SealForce"]} Kg");
+                                Console.WriteLine($"Seal Length: {viewParams["SealLength"]} mm");
+                            }
+                            break;
+
+                        case "3":
+                            ModifyParameters(driver);
+                            break;
+
+                                            case "4":
+                        try
+                        {
+                            var temperature = driver.GetCurrentTemperature();
+                            Console.WriteLine($"Current Temperature: {temperature}°C");
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Sealing failed: {ex.Message}");
+                            Console.WriteLine($"Failed to get temperature: {ex.Message}");
                         }
                         break;
 
-                    case "2":
-                        var parameters = driver.Operations["StartSealing"] as Hashtable;
-                        if (parameters != null)
-                        {
-                            Console.WriteLine("Current Sealing Parameters:");
-                            Console.WriteLine($"Temperature: {parameters["Temperature"]}°C");
-                            Console.WriteLine($"Seal Time: {parameters["SealTime"]} seconds");
-                            Console.WriteLine($"Seal Force: {parameters["SealForce"]} Kg");
-                            Console.WriteLine($"Seal Length: {parameters["SealLength"]} mm");
-                        }
-                        break;
-
-                    case "3":
-                        ModifyParameters(driver);
-                        break;
-
-                    case "4":
+                    case "5":
                         exit = true;
                         break;
 
-                    default:
-                        Console.WriteLine("Invalid command. Please try again.");
-                        break;
+                        default:
+                            Console.WriteLine("Invalid command. Please try again.");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\nError: {ex.Message}");
+                    needsConnection = true;  // Force reconnection on error
                 }
             }
 
@@ -115,7 +145,7 @@ class TestDriver
 
     static void ModifyParameters(ALPSDriver driver)
     {
-        var parameters = driver.Operations["StartSealing"] as Hashtable;
+        var parameters = driver.Operations[driver.StartSealingOperationName] as SortedList;
         if (parameters == null)
         {
             Console.WriteLine("Error: Could not access sealing parameters");
