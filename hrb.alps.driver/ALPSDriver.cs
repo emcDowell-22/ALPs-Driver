@@ -18,9 +18,10 @@ namespace HRB
 
         // Connect operations
         private const string _operationConnect = "Connect";
+        //remove this command completely bc its already built in
         //seal operations
-        private const string _operationStartSealing = "StartSealing";
-        public string StartSealingOperationName => _operationStartSealing;
+        private const string _operationSeal = "Seal";
+        public string StartSealingOperationName => _operationSeal;
 
         // Default values
         private const int DefaultTemperature = 165; // °C
@@ -175,7 +176,7 @@ namespace HRB
                 { _parameterSealForce, DefaultSealForce },
                 { _parameterSealLength, DefaultSealLength }
             };
-            Operations.Add(_operationStartSealing, sealingParameters);
+            Operations.Add(_operationSeal, sealingParameters);
         }
 
         private bool EnsurePortOpen()
@@ -342,7 +343,7 @@ namespace HRB
             try
             {
                 LogMessage("Starting sealing operation...");
-                currentCommand = _operationStartSealing;
+                currentCommand = _operationSeal;
                 ExecuteOperation();
             }
             catch (Exception ex)
@@ -427,7 +428,7 @@ namespace HRB
 
         private void SetSealingParameters()
         {
-            var parameters = Operations[_operationStartSealing] as SortedList;
+            var parameters = Operations[_operationSeal] as SortedList;
             if (parameters == null)
             {
                 throw new Exception("Sealing parameters not found");
@@ -486,7 +487,7 @@ namespace HRB
                 case _operationConnect:
                     ExecuteConnect();
                     break;
-                case _operationStartSealing:
+                case _operationSeal:
                     ExecuteStartSealing();
                     break;
                 default:
